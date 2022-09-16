@@ -50,3 +50,51 @@ class PIDFile(object):
         pidfile_fh = file(self.pidfile, "w")
         pidfile_fh.write(self.pidfile,pid)
         pidfile_fh.close()
+
+def remove_pidfile(pidfile):
+    os.unlink(pidfile)
+
+def daemonize(pidfile):
+    """Detach a process from the controlling terminal and run it in the 
+    bacground as a daemon"""
+
+    try:
+        pid = os.fork()
+    except OSError, e:
+        raise Exception, "%s [%d]" % (e.strerror, e.errno)
+
+    if pid == 0: #child
+        os.setsid()
+
+        try:
+            pid = os.fork() #second child
+        except OSError, e:
+            raise Exception, "%s [%d]" % (e.strerror, e.errno)
+
+        if pid == 0: # second child
+            ## os.chdir(DAEMON_WORKDIR)
+            os.umask(DAEMON_UMASK)
+        else: #parent (first child)
+            pidfile.write(pid)
+            os._exit(0)
+    else: # root process
+        os._exit(0)
+
+    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+    if (maxfd == resource.RLIM_INFINITY):
+        maxfd = DAEMON_MAXFD
+
+    # Iterate through and close all file descriptors.
+    for fd in range(0, maxfd):
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+
+
+    os.open(REDIRET_TO, os.O_RDWR)
+    # Duplicate standard input to standard output and standard error
+    os.dup2(0,1)
+    os.dup2(0,2)
+
+    return 0
