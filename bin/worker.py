@@ -1,3 +1,4 @@
+from tkinter import E
 from carrot.connection import DjangoAMPQConnection
 from crunchy.messaging import TaskConsumer
 from crunchy.conf import DAEMON_CONCURRENCY, DAEMON_LOG_FILE
@@ -41,5 +42,50 @@ class TaskDaemon(object):
 
     def fetch_next_task(self):
         message = self.task_consumer.fetch()
-        if message is None:
-            raise EmptyQueue() 
+        if message is None: # No messages waiting
+            raise EmptyQueue()
+
+        message_data = simplejson.loads(message.body)
+        task_name = message_data.pop("crunchTASK")
+        task_id = message_data.pop("crunchId")
+        self.logger.info("Got task from broker:%s[%s]" %(task_name, task_id))
+        if task_name not in self.task_registry:
+            message.reject()
+            raise UnknownTask(task_name)
+        task_func = self.task_registry[task_name]
+        task_func_params = {"loglevel":self.loglevel,
+                            "logfile": self.logfile}
+        task_func_params.update(message_data)
+        
+        #try:
+        result = self.pool.apply_async(task_func, [], task_func_params)
+        #except:
+        #   messsage.reject()
+        #   raise
+        
+        message.ack()
+        return result, task_name, task_id
+
+    def run(self):
+        results = ProcessQueue(self.concurrency, logger=self.logger,
+        done_msg="Task %(name)s[%(id)s] processed:%(return_value)s")
+        last_empty_emit = None
+
+        while True:
+            try:
+                result, task_name, task_id = self.fetch_next_task()
+            except EmptyQueue:
+                if not last_empty_emit or \
+                    time.time() > last_empty_emit + EMPTY_MSG_EMIT_EVERY:
+                    time.sleep(self.queue_wakeup_after)
+                    continue
+                except UnknownTask, e:
+                    self.logger.info("Unknown task %s requeued and ignored" %(
+                                                                task_name))
+                    continue
+                # except Exception, e:
+                #     self.logger.critical("Raised %s: %s\n%s"%
+                #     (e.__class__, e, traceback.format_exc()))
+                #     continue
+                
+                results.add(result, task_name, task_id)
