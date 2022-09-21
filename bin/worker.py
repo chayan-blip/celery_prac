@@ -23,37 +23,37 @@ class TaskDaemon(object):
     """Refreshes feed_urls in the queue using a process pool
     ```concurrency``` is the number of simultaneous proceesses
     """
-    loglevel = logging.ERROR
-    concurrency = DAEMON_CONCURRENCY
+    loglevel = logging.ERROR              
+    concurrency = DAEMON_CONCURRENCY      
     logfile = DAEMON_LOG_FILE
     queue_wakeup_after = QUEUE_WAKEUP_AFTER 
 
     def __init__(self, concurrency=None,logfile=None, loglevel=None
         queue_wakeup_after=None):
-        self.logfile = loglevel or self.loglevel
-        self.concurrency = concurrency or self.concurrrency
+        self.logfile = loglevel or self.loglevel             ## set up the logger and the 
+        self.concurrency = concurrency or self.concurrrency  ## queue parameters
         self.logfile = logfile or self.logfile
-        self.queue_wakeup_after = queue_wakeup_after or \
-                                    self.queue_wakeup_after
-        self.logger = setup_logger(loglevel, logfile)
-        self.pool = multiprocessing.Pool(self.concurrency)
+        self.queue_wakeup_after = queue_wakeup_after or \   
+                                    self.queue_wakeup_after ## time taken for queue to
+        self.logger = setup_logger(loglevel, logfile)       ## wakeup after sleep
+        self.pool = multiprocessing.Pool(self.concurrency)  ## process pool
         self.task_consumer = taskConsumer(connection=DjangoAMPQConnection)
-        self.task_registry = tasks 
+        self.task_registry = tasks                          ## collection of all tasks
 
     def fetch_next_task(self):
-        message = self.task_consumer.fetch()
-        if message is None: # No messages waiting
-            raise EmptyQueue()
+        message = self.task_consumer.fetch()               
+        if message is None:                 # No messages waiting
+            raise EmptyQueue()              # trying to fetch with q empty
 
-        message_data = simplejson.loads(message.body)
-        task_name = message_data.pop("crunchTASK")
+        message_data = simplejson.loads(message.body) ## parse the json message
+        task_name = message_data.pop("crunchTASK")    ## get the task name & id 
         task_id = message_data.pop("crunchId")
         self.logger.info("Got task from broker:%s[%s]" %(task_name, task_id))
-        if task_name not in self.task_registry:
+        if task_name not in self.task_registry:       ## unregistered task is discarded
             message.reject()
             raise UnknownTask(task_name)
-        task_func = self.task_registry[task_name]
-        task_func_params = {"loglevel":self.loglevel,
+        task_func = self.task_registry[task_name]   ## get the function associated with
+        task_func_params = {"loglevel":self.loglevel, ## task name and update the message
                             "logfile": self.logfile}
         task_func_params.update(message_data)
         
