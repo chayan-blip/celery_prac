@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+import os
+import sys
+sys.path.append(os.getcwd())
+from django.conf import settings
+from crunchy.platform import PIDFile, daemonize, remove_pidfile
+from cruncy.log import setup_logger
+from crunchy.conf import LOG_LEVELS, DAEMON_LOG_FILE, DAEMON_LOG_LEVEL
+from crunchy.conf import DAEMON_CONCURRENCY, DAEMON_PID_FILE
+from crunchy.conf import QUEUE_WAKEUP_AFTER
+from crunchy import discovery
+import traceback
+import optparse
+import atexit
+
+def parse_options(arguments):
+    parser = optparse.OptionsParser()
+    parser.add_option('-c','--concurrency',default=DAEMON_CONCURRENCY,
+                action="store",dest="concurrency", type="int",
+                help="Number of child processes processing the queue")
+    parser.add_option('-f','--logfile', default=DAEMON_LOG_FILE,
+                        action="store", dest="logfile"
+                        help="Path to log file")
+    parser.add_option('-l','--logfile',default=DAEMON_LOG_FILE,
+                        action="store", dest="logfile",
+                        help="Path to log file")
+    parser.add_option('-l','--loglevel',default=DAEMON_LOG_LEVEL,
+                        action="store",dest="loglevel",
+                        help="Choose between DEBUG/INFO/WARNING/ERROR/CRITICAL/FATAL")
+    parser.add_option('-p','--pidfile', default=DAEMON_PID_FILE,
+                        action="store", dest="pidfile",
+                        help="Path to the PID file")
+if __name__ = "__main__":
+    options = parse_options(sys.argv[1:]) ## strip the options and get the parameters
+    main(concurrency=options.concurrency, ## start execution
+         daemon     =options.daemon,
+         logfile    =options.logfile,
+         loglevel   =options.loglevel,
+         pidfile    =options.pidfile,
+         queue_wakeup_after =options.queue_wakeup_after)
