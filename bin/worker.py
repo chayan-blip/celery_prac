@@ -53,32 +53,40 @@ class TaskDaemon(object):
             message.reject()
             raise UnknownTask(task_name)
         task_func = self.task_registry[task_name]   ## get the function associated with
-        task_func_params = {"loglevel":self.loglevel, ## task name and update the message
-                            "logfile": self.logfile}
+        task_func_params = {"loglevel":self.loglevel, ## task name from the registry 
+                            "logfile": self.logfile}  ## and update the message
         task_func_params.update(message_data)
         
         #try:
         result = self.pool.apply_async(task_func, [], task_func_params)
+        ## take a thread pool and pass the function with
+        ## arguments to one of the threads, which will calculate
+        ## and return the result asynchronously
         #except:
         #   messsage.reject()
         #   raise
         
         message.ack()
-        return result, task_name, task_id
+        return result, task_name, task_id ## return the result details
 
     def run(self):
         results = ProcessQueue(self.concurrency, logger=self.logger,
         done_msg="Task %(name)s[%(id)s] processed:%(return_value)s")
+        ## initialize the process queue according to django conf parameters
         last_empty_emit = None
 
-        while True:
+        while True: ## keep iterating while 
             try:
                 result, task_name, task_id = self.fetch_next_task()
-            except EmptyQueue:
+                ## keep asking for the next task
+            except EmptyQueue: ## if queue is empty then raise exception
+                ## if queue has not emitted empty message then emit that
                 if not last_empty_emit or \
                     time.time() > last_empty_emit + EMPTY_MSG_EMIT_EVERY:
                     time.sleep(self.queue_wakeup_after)
                     continue
+                ## if you get a task that we do not know how to process 
+                ## requeue that task
                 except UnknownTask, e:
                     self.logger.info("Unknown task %s requeued and ignored" %(
                                                                 task_name))
@@ -88,4 +96,4 @@ class TaskDaemon(object):
                 #     (e.__class__, e, traceback.format_exc()))
                 #     continue
                 
-                results.add(result, task_name, task_id)
+                results.add(result, task_name, task_id) ## queue the result
