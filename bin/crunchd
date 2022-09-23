@@ -13,6 +13,34 @@ import traceback
 import optparse
 import atexit
 
+def main(concurrency=DAEMON_CONCURRENCY, daemon=False,
+         loglevel=DAEMON_LOG_LEVEL, logfile=DAEMON_LOG_FILE,
+         pidfile=DAEMON_PID_FILE, queue_wakeup_after=QUEUE_WAKEUP_AFTER):
+    if settings.DATABASE_ENGINE == "sqlite3" and concurrency > 1:
+        import warnings
+        warnings.warn("The sqlite3 database engine doesn't support"
+                    "concurrency. We'll be using single process only.",
+                    UserWarning)
+        concurrency = 1
+    if daemon:
+        sys.stderr.write("Launching crunchd in the background")
+        pidfile_handler = PIDFile(pidfile)
+        pidfile_handler.check()
+        daemonize(pidfile=pidfile_handler)
+        atexit.register(remove_pidfile, pidfile)
+    else:
+        logfile = None # log to stderr when not running as daemon.
+    discovery.autodiscover()
+    crunchd = TaskDaemon(concurrency=concurrency,
+                            loglevel=loglevel,
+                            logfile=logfile,
+                            queue_wakeup_after=queue_wakeup_after)
+    try:
+        crunchd.run()
+    except Exception, e:
+        raise emergency_error(logfile, "crunchd raise exception %s: %s \%s" %(
+            e.__class__, e, traceback.format_exc()))
+        
 def parse_options(arguments):
     parser = optparse.OptionsParser()
     parser.add_option('-c','--concurrency',default=DAEMON_CONCURRENCY,
@@ -21,15 +49,25 @@ def parse_options(arguments):
     parser.add_option('-f','--logfile', default=DAEMON_LOG_FILE,
                         action="store", dest="logfile"
                         help="Path to log file")
-    parser.add_option('-l','--logfile',default=DAEMON_LOG_FILE,
-                        action="store", dest="logfile",
-                        help="Path to log file")
     parser.add_option('-l','--loglevel',default=DAEMON_LOG_LEVEL,
                         action="store",dest="loglevel",
                         help="Choose between DEBUG/INFO/WARNING/ERROR/CRITICAL/FATAL")
     parser.add_option('-p','--pidfile', default=DAEMON_PID_FILE,
                         action="store", dest="pidfile",
                         help="Path to the PID file")
+    parser.add_option('-w','--wakeup-after', default=QUEUE_WAKEUP_AFTER,
+                action="store", dest="queue_wakeup_after",
+                help="If the queue is empty, this is the time *in seconds* the"
+                     "daemon sleeps until it wakes up to check if there is any"
+                     "new messages on the queue")
+    parser.add_option('-d','--daemon',default=False,
+                    action="store_true", dest="daemon"
+                    help="Run in background as a daemon")
+    options, values = parser.parse_args(arguments)
+    if not isinstance(options.loglevel, int):
+        options.loglevel = LOG_LEVELS[options.loglevel.upper()]
+    return options
+
 if __name__ = "__main__":
     options = parse_options(sys.argv[1:]) ## strip the options and get the parameters
     main(concurrency=options.concurrency, ## start execution
