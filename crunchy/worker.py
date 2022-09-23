@@ -41,7 +41,10 @@ class TaskDaemon(object):
         self.task_registry = tasks                          ## collection of all tasks
 
     def fetch_next_task(self):
-        message = self.task_consumer.fetch()               
+        message = self.task_consumer.fetch()
+        ## Recieve the next messsage waiting on the queue
+        # returns a BaseMessage class object or no message (None) if the 
+        # queue is empty        
         if message is None:                 # No messages waiting
             raise EmptyQueue()              # trying to fetch with q empty
 
@@ -66,7 +69,8 @@ class TaskDaemon(object):
         #   messsage.reject()
         #   raise
         
-        message.ack()
+        message.ack() ## acknowledge that the message has
+        ## been processed, this will remove the message from the queue
         return result, task_name, task_id ## return the result details
 
     def run(self):
@@ -95,5 +99,5 @@ class TaskDaemon(object):
                 #     self.logger.critical("Raised %s: %s\n%s"%
                 #     (e.__class__, e, traceback.format_exc()))
                 #     continue
-                
+
                 results.add(result, task_name, task_id) ## queue the result
