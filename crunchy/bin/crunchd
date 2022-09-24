@@ -9,6 +9,7 @@ from crunchy.conf import LOG_LEVELS, DAEMON_LOG_FILE, DAEMON_LOG_LEVEL
 from crunchy.conf import DAEMON_CONCURRENCY, DAEMON_PID_FILE
 from crunchy.conf import QUEUE_WAKEUP_AFTER
 from crunchy import discovery
+from crunchy.worker import TaskDaemon
 import traceback
 import optparse
 import atexit
