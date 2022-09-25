@@ -10,5 +10,14 @@
     ## TODO add with daemon flow
     ## if the daemon is not initially running then invoke the autodiscover
     ## function
-    ## this autodiscover function will go the django settings file in django
-    ## library and then run an iterator
+    ## the auto discover will create a list of apps from settings.APPS where
+    ## if the module is found then it will import app.task file
+    # Now initialize the crunchy daemon
+    # initializing the crunchy daemon will setup the logger
+    # create a process pool containing threads 
+    # create a consumer and initialize the task registry
+    # now crunchd run will be invoked 
+    # This will initialize a process q
+    # The run process will keep running 
+    # run will try to fetch the next message from the process
+    #  q 
