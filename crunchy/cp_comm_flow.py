@@ -19,5 +19,5 @@
     # now crunchd run will be invoked 
     # This will initialize a process q
     # The run process will keep running 
-    # run will try to fetch the next message from the process
-    #  q 
+    # run will try to fetch the next message from the process q
+    # 
