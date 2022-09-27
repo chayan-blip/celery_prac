@@ -5,7 +5,8 @@ from django.core import exceptions
 def autodiscover():
     """Include tasks for all applications in settings.INSTALLED_APPS"""
     return filter(None, [tasks_for_app(app) for app in settings.INSTALLED_APPS])
-    ## find the installed apps in the settings and return an iterator invoking tasks for app
+    ## find the installed apps in the settings and return an iterator invoking tasks for
+    #  app
 
 def tasks_for_app(app):
     """Given an application name, imports any tasks.py file for that app"""
