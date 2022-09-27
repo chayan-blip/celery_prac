@@ -2,14 +2,19 @@
 import os
 import sys
 sys.path.append(os.getcwd())
+django_project_dir = os.environ.get("DJANGO_PROJECT_DIR")
+
+if django_project_dir:
+    sys.path.append(django_project_dir)
+
 from django.conf import settings
-from crunchy.platform import PIDFile, daemonize, remove_pidfile
-from cruncy.log import setup_logger
-from crunchy.conf import LOG_LEVELS, DAEMON_LOG_FILE, DAEMON_LOG_LEVEL
-from crunchy.conf import DAEMON_CONCURRENCY, DAEMON_PID_FILE
-from crunchy.conf import QUEUE_WAKEUP_AFTER
-from crunchy import discovery
-from crunchy.worker import TaskDaemon
+from celery.platform import PIDFile, daemonize, remove_pidfile
+from celery.log import setup_logger
+from celery.conf import LOG_LEVELS, DAEMON_LOG_FILE, DAEMON_LOG_LEVEL
+from celery.conf import DAEMON_CONCURRENCY, DAEMON_PID_FILE
+from celery.conf import QUEUE_WAKEUP_AFTER
+from celery import discovery
+from celery.worker import TaskDaemon
 import traceback
 import optparse
 import atexit
@@ -24,7 +29,7 @@ def main(concurrency=DAEMON_CONCURRENCY, daemon=False,
                     UserWarning)
         concurrency = 1
     if daemon:
-        sys.stderr.write("Launching crunchd in the background")
+        sys.stderr.write("Launching celeryd in the background")
         pidfile_handler = PIDFile(pidfile)
         pidfile_handler.check()
         daemonize(pidfile=pidfile_handler)
