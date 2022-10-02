@@ -1,8 +1,8 @@
 from django.conf import settings
 import logging
 
-# The default AMQP exchange key
-DEFAULT_AMQP_EXCHANGE = "celery"
+# The default AMQP exchange key 
+DEFAULT_AMQP_EXCHANGE = "celery" ## AMQp - asynchronous messaging queue protocol
 
 # The default AMQP routing key
 DEFAULT_AMQP_ROUTING_KEY = "celery"
