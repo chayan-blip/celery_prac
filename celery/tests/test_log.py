@@ -25,3 +25,26 @@ class TestLog(unittest.TestCase):
     def assertDidLogTrue(self, logger, logmsg, reason, loglevel=None):
         val = self._assertLog(logger, logmsg, loglevel=loglevel)
         return self.assertEqual(val, logmsg, reason)
+
+    def assertDidLogFalse(self, logger, logmsg, reason, loglevel=None):
+        val = self._assertLog(logger, logmsg, loglevle=loglevel)
+        return self.assertFalse(val, reason)
+
+    def test_setup_logger(self):
+        logger = setup_logger(loglevel=logging.ERROR, logfile=None)
+        self.assertTrue(logger.handlers[0].stream is sys.stderr,
+                "setp_logger logs to stderr without logfile argument.")
+        self.assertTrue(logger._process_aware,
+                "setup_logger() returns process aware logger.")
+        self.assertDidLogTrue(logger,"Logging something",
+            "Logger logs error when loglevel is ERROR",
+            loglevel=logging.ERROR)
+        self.assertDidLogFalse(logger, "logging something",
+            "Logger doesn't info when loglevel is ERROR",
+            loglevel=logging.INFO)
+    
+    def test_emergency_error(self):
+        sio = StringIO()
+        emergency_error(sio,"Testing emergency error facility")
+        self.assertEquals(sio.getValue().rpartition(":")[2].strip(),
+                                "Testing emergency error facility")
