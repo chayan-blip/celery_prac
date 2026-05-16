@@ -3,13 +3,13 @@ from functools import wraps
 from task.task import Task
 
 
-def task(*args, **kwargs):
+def dec (*args, **kwargs):
     """
-        refer the comments below
+        Create a Class out of the function
+        calling the decorator
     """
     if len(args) == 1 and callable(args[0]):
-        # Create a function of the name
-        # calling the Task decorator
+        # note down the function calling the decorator
         func = args[0]
 
         # Create a run method which calls the actual function
@@ -17,9 +17,10 @@ def task(*args, **kwargs):
         def run(self, *args, **kwargs):
             return func(*args, **kwargs)
 
-        # Create a new object of Task Class type from the function passed above
+        # Create a new Class of Task Class type from the function passed above
         TaskClass = type(func.__name__, (Task,), {"run": run})
 
-        return TaskClass
+        return TaskClass()
+
     else:
         raise TypeError("only @task decorator supported")
