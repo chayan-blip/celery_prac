@@ -1,6 +1,7 @@
-from celery_prac.decorator import task
+from celery_prac.decorator import dec
 
-@task
+
+@dec
 def add (a, b):
     return a + b
 
