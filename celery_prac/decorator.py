@@ -1,9 +1,10 @@
 from functools import wraps
 
 from task.task import Task
+from task.registry import tasks
 
 
-def dec (*args, **kwargs):
+def dec(*args, **kwargs):
     """
         Create a Class out of the function
         calling the decorator
@@ -20,7 +21,10 @@ def dec (*args, **kwargs):
         # Create a new Class of Task Class type from the function passed above
         TaskClass = type(func.__name__, (Task,), {"run": run})
 
-        return TaskClass()
+        task_instance = TaskClass()
+        task_instance.name = f"{func.__module__}.{func.__qualname__}"
+        tasks.push(task_instance)
+        return task_instance
 
     else:
         raise TypeError("only @task decorator supported")
