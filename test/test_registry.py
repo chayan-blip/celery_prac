@@ -1,7 +1,7 @@
 """TestRegistry — test task registration/deregistration in the global registry"""
 import pytest
 from task.registry import tasks
-from celery_prac.decorator import dec
+from producer.decorator import dec
 
 
 class TestRegistry:
