@@ -1,4 +1,5 @@
-"""Task state registry.
+"""
+Task state registry.
 
 Stores task executions keyed by UUID. Each entry is:
     task_id -> [state, details_dict]
@@ -27,7 +28,6 @@ class TaskRegistry:
     def __init__(self, compaction_limit: int = 100):
         self._store: dict[str, list] = {}
         self._compaction_limit = compaction_limit
-
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -70,6 +70,29 @@ class TaskRegistry:
     def get(self, task_id: str) -> list | None:
         """Return the entry [state, details] or None if not found."""
         return self._store.get(task_id)
+    # ------------------------------------------------------------------
+    # Result helpers
+    # ------------------------------------------------------------------
+
+    def result_ready(self, task_id: str) -> bool:
+        """Return True if the task has reached READY state.
+
+        Raises KeyError if task_id is unknown.
+        """
+        entry = self._store.get(task_id)
+        if entry is None:
+            raise KeyError(f"Task '{task_id}' not found")
+        return entry[0] == State.READY
+
+    def get_result(self, task_id: str) -> Any:
+        """Return the task result if READY, otherwise raise RuntimeError.
+
+        The result is expected to be stored in details['result'].
+        Raises KeyError if task_id is unknown.
+        """
+        if not self.result_ready(task_id):
+            raise RuntimeError(f"Task '{task_id}' is not READY")
+        return self._store[task_id][1].get("result")
 
     # ------------------------------------------------------------------
     # Compaction
@@ -102,7 +125,6 @@ class TaskRegistry:
     # ------------------------------------------------------------------
     # Convenience
     # ------------------------------------------------------------------
-
     def __len__(self) -> int:
         return len(self._store)
 
