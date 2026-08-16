@@ -20,3 +20,6 @@ class TestDecorator:
         assert mul(2,3) == 6
         # multiply 5 and 4 check if 20 is recieved
         assert mul(5,8) == 40
+
+
+        # This is nonsenese
